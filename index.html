@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entraînement Bac Français</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --border-color: #333333;
+            --text-color: #111111;
+            --correct-flash: rgba(46, 204, 113, 0.3);
+            --incorrect-flash: rgba(231, 76, 60, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            transition: background-color 0.2s ease;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: 2px solid var(--border-color);
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--border-color);
+            color: #ffffff;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .progress {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .box-phrase {
+            background-color: #ffffff;
+            border: 3px solid var(--border-color);
+            padding: 2rem;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+        }
+
+        .instruction {
+            font-size: 0.95rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+            color: #444;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .option-card {
+            background: #ffffff;
+            border: 2px solid #ccc;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .option-card:hover {
+            border-color: var(--border-color);
+        }
+
+        .option-card.selected {
+            background-color: #111111;
+            color: #ffffff;
+            border-color: #111111;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 3px solid var(--border-color);
+            color: var(--border-color);
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--border-color);
+            color: #ffffff;
+        }
+
+        body.flash-correct {
+            background-color: var(--correct-flash);
+        }
+
+        body.flash-incorrect {
+            background-color: var(--incorrect-flash);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Entraînement Bac Français</h1>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('figures')">Figures de Style</button>
+            <button class="tab-btn" onclick="switchTab('grammaire')">Grammaire</button>
+        </div>
+    </header>
+
+    <main class="quiz-container">
+        <div class="progress" id="progress-text">Question 1 / --</div>
+        <div class="box-phrase" id="phrase-display">Chargement de la phrase...</div>
+        
+        <div class="instruction">Sélectionne la ou les bonnes réponses ci-dessous :</div>
+        <div class="options-grid" id="options-display"></div>
+        
+        <button class="btn-submit" id="submit-btn" onclick="validateAnswer()">Valider la réponse</button>
+    </main>
+
+    <script>
+        const dataset = {
+            figures: [
+                {
+                    text: "« Pour qui sont ces serpents qui sifflent sur vos têtes ? » (Racine, Andromaque)",
+                    options: ["Allitération", "Assonance", "Oxymore", "Litote"],
+                    answers: ["Allitération"]
+                },
+                {
+                    text: "« Cette obscure clarté qui tombe des étoiles » (Corneille, Le Cid)",
+                    options: ["Antithèse", "Oxymore", "Périphrase", "Hyperbole"],
+                    answers: ["Oxymore"]
+                },
+                {
+                    text: "« Je vis, je meurs ; je me brûle et me noie. » (Louise Labé, Sonnets)",
+                    options: ["Antithèse", "Chiasme", "Métaphore", "Euphémisme"],
+                    answers: ["Antithèse"]
+                },
+                {
+                    text: "« Va, je ne te hais point. » (Corneille, Le Cid)",
+                    options: ["Litote", "Euphémisme", "Météphonie", "Personnification"],
+                    answers: ["Litote"]
+                },
+                {
+                    text: "« Je meurs, je suis mort, je suis enterré. » (Molière, L'Avare)",
+                    options: ["Gradation", "Hyperbole", "Anaphore", "Chiasme"],
+                    answers: ["Gradation", "Hyperbole"]
+                },
+                {
+                    text: "« La Nature est un temple où de vivants piliers... » (Baudelaide, Correspondances)",
+                    options: ["Métaphore", "Comparaison", "Allégorie", "Périphrase"],
+                    answers: ["Métaphore"]
+                },
+                {
+                    text: "« La Terre est bleue comme une orange. » (Paul Éluard)",
+                    options: ["Comparaison", "Métaphore", "Oxymore", "Personnification"],
+                    answers: ["Comparaison"]
+                },
+                {
+                    text: "« Rome a voté, Rome est soumise, Rome est libre. »",
+                    options: ["Anaphore", "Parallélisme", "Gradation", "Métonymie"],
+                    answers: ["Anaphore"]
+                },
+                {
+                    text: "« C'était un homme d'une générosité... très économe. »",
+                    options: ["Antiphrase (Ironie)", "Oxymore", "Litote", "Euphémisme"],
+                    answers: ["Antiphrase (Ironie)"]
+                },
+                {
+                    text: "« Croiser le fer. » / « Boire une bonne bouteille. »",
+                    options: ["Métonymie", "Synecdoque", "Périphrase", "Métaphore"],
+                    answers: ["Métonymie"]
+                },
+                {
+                    text: "« Le conseiller des grâces » (pour désigner un miroir chez les Précieuses)",
+                    options: ["Périphrase", "Métaphore", "Personnification", "Hyperbole"],
+                    answers: ["Périphrase"]
+                },
+                {
+                    text: "« Un chemin de velours atténuait le bruit de ses pas. »",
+                    options: ["Métaphore", "Comparaison", "Allitération", "Personnification"],
+                    answers: ["Métaphore"]
+                },
+                {
+                    text: "« Le vent hurle et pleure sous les portes. »",
+                    options: ["Personnification", "Allégorie", "Métaphore", "Hyperbole"],
+                    answers: ["Personnification"]
+                },
+                {
+                    text: "« Il nous a quittés pour un monde meilleur. »",
+                    options: ["Euphémisme", "Litote", "Antithèse", "Périphrase"],
+                    answers: ["Euphémisme"]
+                },
+                {
+                    text: "« Ma jeunesse ne fut qu'un ténébreux orage » (Baudelaire)",
+                    options: ["Métaphore", "Comparaison", "Oxymore", "Antithèse"],
+                    answers: ["Métaphore"]
+                },
+                {
+                    text: "« Ô temps ! suspends ton vol, et vous, heures propices ! » (Lamartine)",
+                    options: ["Apostrophe", "Personnification", "Allégorie", "Hyperbole"],
+                    answers: ["Apostrophe", "Personnification"]
+                },
+                {
+                    text: "« Des chemins de fer, des voitures, des maisons, des usines, des fumées... » (Zola)",
+                    options: ["Accumulation", "Gradation", "Anaphore", "Métonymie"],
+                    answers: ["Accumulation"]
+                },
+                {
+                    text: "« Les casques d'or » (pour désigner des soldats)",
+                    options: ["Synecdoque", "Métonymie", "Périphrase", "Oxymore"],
+                    answers: ["Synecdoque"]
+                },
+                {
+                    text: "« Ayant le feu dans le cœur et la lèvre de glace »",
+                    options: ["Antithèse", "Chiasme", "Oxymore", "Parallélisme"],
+                    answers: ["Antithèse", "Parallélisme"]
+                },
+                {
+                    text: "« C'est un roc ! c'est un pic ! c'est un cap ! Que dis-je, c'est un cap ? C'est une péninsule ! » (Rostand)",
+                    options: ["Gradation", "Hyperbole", "Accumulation", "Comparaison"],
+                    answers: ["Gradation", "Hyperbole"]
+                },
+                {
+                    text: "« Il faut manger pour vivre, et non pas vivre pour manger. » (Molière)",
+                    options: ["Chiasme", "Antithèse", "Oxymore", "Anaphore"],
+                    answers: ["Chiasme"]
+                },
+                {
+                    text: "« Un silence assourdissant envahit la pièce. »",
+                    options: ["Oxymore", "Antithèse", "Litote", "Métaphore"],
+                    answers: ["Oxymore"]
+                },
+                {
+                    text: "« Elle a versé des torrents de larmes à l'annonce de la nouvelle. »",
+                    options: ["Hyperbole", "Métaphore", "Personnification", "Litote"],
+                    answers: ["Hyperbole"]
+                },
+                {
+                    text: "« Je ne dis pas non à un petit verre de vin. »",
+                    options: ["Litote", "Euphémisme", "Antiphrase (Ironie)", "Métonymie"],
+                    answers: ["Litote"]
+                },
+                {
+                    text: "« L'Aurore aux doigts de rose vient de se lever. » (Homère)",
+                    options: ["Allégorie", "Personnification", "Périphrase", "Métaphore"],
+                    answers: ["Personnification"]
+                },
+                {
+                    text: "« Un horrible danger le guettait, une terrible menace planait. »",
+                    options: ["Parallélisme", "Chiasme", "Anaphore", "Antithèse"],
+                    answers: ["Parallélisme"]
+                },
+                {
+                    text: "« Les voiles s'éloignaient à l'horizon. »",
+                    options: ["Synecdoque", "Métonymie", "Périphrase", "Métaphore"],
+                    answers: ["Synecdoque"]
+                },
+                {
+                    text: "« Le poète est semblable au prince des nuées » (Baudelaire)",
+                    options: ["Comparaison", "Métaphore", "Allégorie", "Périphrase"],
+                    answers: ["Comparaison"]
+                },
+                {
+                    text: "« Vous êtes aujourd'hui ce qu'autrefois je fus. » (Corneille)",
+                    options: ["Antithèse", "Chiasme", "Parallélisme", "Oxymore"],
+                    answers: ["Antithèse"]
+                },
+                {
+                    text: "« Tout l'univers obéit à l'Amour. » (La Fontaine)",
+                    options: ["Allégorie", "Personnification", "Hyperbole", "Métonymie"],
+                    answers: ["Allégorie"]
+                }
+            ],
+            grammaire: [
+                {
+                    text: "« Bien qu'il [fasse] froid, il est sorti sans manteau. » Quel est le mode du verbe entre crochets ?",
+                    options: ["Subjonctif", "Indicatif", "Conditionnel", "Impératif"],
+                    answers: ["Subjonctif"]
+                },
+                {
+                    text: "« Le poème [que tu as analysé] est magnifique. » Quelle est la fonction exacte de la proposition entre crochets ?",
+                    options: ["Complément du nom 'poème'", "Complément d'objet direct", "Complément circonstanciel", "Sujet"],
+                    answers: ["Complément du nom 'poème'"]
+                },
+                {
+                    text: "« Il ne mange [que] des légumes. » De quel type de négation s'agit-il ?",
+                    options: ["Négation restrictive", "Négation totale", "Négation lexicale", "Négation partielle"],
+                    answers: ["Négation restrictive"]
+                },
+                {
+                    text: "« Je me demande [si le train arrivera à l'heure]. » Quelle est la nature de cette proposition ?",
+                    options: ["Subordonnée interrogative indirecte", "Subordonnée relative", "Subordonnée conjonctive complétive", "Proposition principale"],
+                    answers: ["Subordonnée interrogative indirecte"]
+                },
+                {
+                    text: "« Il travaille d'arrache-pied [pour que ses parents soient fiers]. » Quelle relation logique est exprimée ?",
+                    options: ["Le but", "La cause", "La conséquence", "La concession"],
+                    answers: ["Le but"]
+                },
+                {
+                    text: "« S'il faisait beau, nous [partirions] à la mer. » À quel temps et mode est conjugué le verbe entre crochets ?",
+                    options: ["Conditionnel présent", "Subjonctif présent", "Indicatif futur simple", "Indicatif imparfait"],
+                    answers: ["Conditionnel présent"]
+                },
+                {
+                    text: "« La Bruyère [peint] les travers des hommes de son siècle. » Quelle est la valeur du présent ici ?",
+                    options: ["Présent d'énonciation", "Présent de vérité générale", "Présent de narration", "Présent d'habitude"],
+                    answers: ["Présent d'énonciation"]
+                },
+                {
+                    text: "« La Terre [tourne] autour du Soleil. » Quelle est la valeur du présent ici ?",
+                    options: ["Présent de vérité générale", "Présent d'énonciation", "Présent de narration", "Présent d'habitude"],
+                    answers: ["Présent de vérité générale"]
+                },
+                {
+                    text: "« Personne n'est venu à la réunion. » Quelle est la portée de cette négation ?",
+                    options: ["Négation partielle", "Négation totale", "Négation restrictive", "Négation exceptive"],
+                    answers: ["Négation totale"]
+                },
+                {
+                    text: "« Est-ce que tu viendras demain ? » De quel type d'interrogation s'agit-il ?",
+                    options: ["Interrogation totale", "Interrogation partielle", "Interrogation indirecte", "Interrogation alternative"],
+                    answers: ["Interrogation totale"]
+                },
+                {
+                    text: "« Où vas-tu ce soir ? » De quel type d'interrogation s'agit-il ?",
+                    options: ["Interrogation partielle", "Interrogation totale", "Interrogation indirecte", "Interrogation rhétorique"],
+                    answers: ["Interrogation partielle"]
+                },
+                {
+                    text: "« Quel est ce bruit ? » Quelle est la classe grammaticale de 'Quel' ?",
+                    options: ["Déterminant interrogatif", "Pronom interrogatif", "Adverbe interrogatif", "Pronom relatif"],
+                    answers: ["Déterminant interrogatif"]
+                },
+                {
+                    text: "« Il est tellement fatigué [qu'il s'est endormi sur sa copie]. » Quelle relation logique est exprimée ?",
+                    options: ["La conséquence", "La cause", "L'opposition", "Le but"],
+                    answers: ["La conséquence"]
+                },
+                {
+                    text: "« [Bien que] Phèdre sache son amour interdit, elle le confesse. » Quel est le rôle de la locution entre crochets ?",
+                    options: ["Introduire une concession", "Introduire une cause", "Introduire une condition", "Introduire un but"],
+                    answers: ["Introduire une concession"]
+                },
+                {
+                    text: "« L'élève [dont je t'ai parlé] a eu 20 au Bac de français. » Quel est le mot subordonnant entre crochets ?",
+                    options: ["Pronom relatif", "Conjonction de subordination", "Adverbe interrogatif", "Pronom personnel"],
+                    answers: ["Pronom relatif"]
+                },
+                {
+                    text: "« Je crains qu'il ne [vienne]. » Comment s'appelle le 'ne' employé ici ?",
+                    options: ["Ne explétif", "Ne de négation totale", "Ne de négation restrictive", "Ne discordant"],
+                    answers: ["Ne explétif"]
+                },
+                {
+                    text: "« Il n'a [guère] apprécié la remarque. » Quelle nuance apporte l'adverbe entre crochets ?",
+                    options: ["Une négation proche de 'presque pas'", "Une négation totale", "Une affirmation atténuée", "Une restriction"],
+                    answers: ["Une négation proche de 'presque pas'"]
+                },
+                {
+                    text: "« Je veux [que tu lises ce roman de Balzac]. » Quelle est la nature de la proposition entre crochets ?",
+                    options: ["Subordonnée conjonctive complétive", "Subordonnée relative", "Subordonnée circonstancielle", "Proposition principale"],
+                    answers: ["Subordonnée conjonctive complétive"]
+                },
+                {
+                    text: "« Soudain, le rideau s'ouvrit. Un homme [entra]. » Quelle est la valeur du passé simple ici ?",
+                    options: ["Action ponctuelle et de premier plan", "Action secondaire", "Action simultanée", "Action de second plan"],
+                    answers: ["Action ponctuelle et de premier plan"]
+                },
+                {
+                    text: "« Il s'installa au bureau pendant que la pluie [tombait]. » Quelle est la valeur de l'imparfait ici ?",
+                    options: ["Action d'arrière-plan / Description", "Action brève", "Action répétitive", "Présent du passé"],
+                    answers: ["Action d'arrière-plan / Description"]
+                }
+            ]
+        };
+
+        let currentTab = 'figures';
+        let currentIndex = 0;
+        let selectedAnswers = [];
+
+        const phraseDisplay = document.getElementById('phrase-display');
+        const optionsDisplay = document.getElementById('options-display');
+        const progressText = document.getElementById('progress-text');
+        const body = document.body;
+
+        function loadQuestion() {
+            selectedAnswers = [];
+            const questions = dataset[currentTab];
+            
+            if (currentIndex >= questions.length) {
+                currentIndex = 0; 
+            }
+
+            const currentQuestion = questions[currentIndex];
+            
+            phraseDisplay.innerText = currentQuestion.text;
+            progressText.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+
+            optionsDisplay.innerHTML = '';
+            currentQuestion.options.forEach(option => {
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                card.innerText = option;
+                card.onclick = () => toggleSelectOption(card, option);
+                optionsDisplay.appendChild(card);
+            });
+        }
+
+        function toggleSelectOption(card, option) {
+            if (selectedAnswers.includes(option)) {
+                selectedAnswers = selectedAnswers.filter(item => item !== option);
+                card.classList.remove('selected');
+            } else {
+                selectedAnswers.push(option);
+                card.classList.add('selected');
+            }
+        }
+
+        function validateAnswer() {
+            const currentQuestion = dataset[currentTab];
+            const correctAnswers = currentQuestion[currentIndex].answers;
+
+            const isCorrect = selectedAnswers.length === correctAnswers.length && 
+                              selectedAnswers.every(val => correctAnswers.includes(val));
+
+            document.getElementById('submit-btn').disabled = true;
+
+            if (isCorrect) {
+                body.classList.add('flash-correct');
+            } else {
+                body.classList.add('flash-incorrect');
+            }
+
+            setTimeout(() => {
+                body.classList.remove('flash-correct', 'flash-incorrect');
+                document.getElementById('submit-btn').disabled = false;
+                currentIndex++;
+                loadQuestion();
+            }, 800);
+        }
+
+        function switchTab(tabName) {
+            if (currentTab === tabName) return;
+            currentTab = tabName;
+            currentIndex = 0;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = event.target;
+            activeBtn.classList.add('active');
+
+            loadQuestion();
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
